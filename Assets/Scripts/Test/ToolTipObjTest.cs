@@ -3,6 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum ToolTipPlacement
+{
+	TopLeftTowardsRight = 0,
+	TopCenterTowardsRight,
+	TopRightTowardsRight,
+	TopRightTowardsLeft,
+	BottomLeftTowardsRight,
+	BottomCenterTowardsRight,
+	BottomRightTowardsRight,
+	BottomRightTowardsLeft
+
+}
+
+public class ToolTipPlacementData
+{
+	public ToolTipPlacement placement;
+	public Vector2 requiredPivot;
+	public Vector2 requiredAnchorMax;
+	public Vector2 requiredAnchorMin;
+
+	public ToolTipPlacementData(ToolTipPlacement _placement)
+	{
+		placement = _placement;
+	}
+
+	public ToolTipPlacementData(ToolTipPlacement _placement, Vector2 _requiredPivot, Vector2 _requiredAnchorMax, Vector2 _requiredAnchorMin)
+	{
+		placement = _placement;
+		requiredPivot = _requiredPivot;
+		requiredAnchorMax = _requiredAnchorMax;
+		requiredAnchorMin = _requiredAnchorMin;
+	}
+}
+
 public class ToolTipUIElement
 {
 	public RectTransform uiElementRectTransform;
@@ -67,6 +101,7 @@ public class ToolTipObjTest : MonoBehaviour
 	public Text linkText;
 	public Image smallImage;
 	public Image largeImage;
+	public RectTransform CanvasRect;
 
 	public int borderX;
 	public int borderY;
@@ -82,6 +117,15 @@ public class ToolTipObjTest : MonoBehaviour
 	ToolTipData smallImageData;
 	ToolTipData smallTextWithImageData;
 	Dictionary<ToolTipElementID, ToolTipUIElement> uiElementsDict;
+
+	ToolTipPlacementData TLTR;
+	ToolTipPlacementData TCTR;
+	ToolTipPlacementData TRTR;
+	ToolTipPlacementData TRTL;
+	ToolTipPlacementData BLTR;
+	ToolTipPlacementData BCTR;
+	ToolTipPlacementData BRTR;
+	ToolTipPlacementData BRTL;
 
 	private float totalContentWidth;
 	private float totalContentHeight;
@@ -104,6 +148,16 @@ public class ToolTipObjTest : MonoBehaviour
 
 		smallTextWithImageData = new ToolTipData ("This yqgpj is a small tooltip with image only");
 		smallTextWithImageData.AddElement (ToolTipElementID.SmallDescriptionImage, "smallImageTestRect");
+
+
+		TLTR = new ToolTipPlacementData(ToolTipPlacement.TopLeftTowardsRight, new Vector2(0,0), new Vector2(0,1), new Vector2(0,1));
+		TCTR = new ToolTipPlacementData(ToolTipPlacement.TopCenterTowardsRight, new Vector2(0,0), new Vector2(0.5f,1), new Vector2(0.5f,1));
+		TRTR = new ToolTipPlacementData(ToolTipPlacement.TopRightTowardsRight, new Vector2(0,0), new Vector2(1,1), new Vector2(1,1));
+		TRTL = new ToolTipPlacementData(ToolTipPlacement.TopRightTowardsLeft, new Vector2(1,0), new Vector2(1,1), new Vector2(1,1));
+		BLTR = new ToolTipPlacementData(ToolTipPlacement.BottomLeftTowardsRight, new Vector2(0,1), new Vector2(0,0), new Vector2(0,0));
+		BCTR = new ToolTipPlacementData(ToolTipPlacement.BottomCenterTowardsRight, new Vector2(0,1), new Vector2(0.5f,0), new Vector2(0.5f,0));
+		BRTR = new ToolTipPlacementData(ToolTipPlacement.BottomRightTowardsRight, new Vector2(0,1), new Vector2(1,0), new Vector2(1,0));
+		BRTL = new ToolTipPlacementData(ToolTipPlacement.BottomRightTowardsLeft, new Vector2(1,1), new Vector2(1,0), new Vector2(1,0));
 
 		uiElementsDict = new Dictionary<ToolTipElementID, ToolTipUIElement> ();
 
@@ -168,6 +222,49 @@ public class ToolTipObjTest : MonoBehaviour
 		{
 			ResetToolTip ();
 		}
+
+
+
+		if (Input.GetKeyUp (KeyCode.Alpha1)) 
+		{
+			UpdateToolTipAnchor (TLTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha2)) 
+		{
+			UpdateToolTipAnchor (TCTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha3)) 
+		{
+			UpdateToolTipAnchor (TRTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha4)) 
+		{
+			UpdateToolTipAnchor (TRTL);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha5)) 
+		{
+			UpdateToolTipAnchor (BLTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha6)) 
+		{
+			UpdateToolTipAnchor (BCTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha7)) 
+		{
+			UpdateToolTipAnchor (BRTR);
+		}
+
+		if (Input.GetKeyUp (KeyCode.Alpha8))
+		{
+			UpdateToolTipAnchor (BRTL);
+		}
+
 	}
 
 	public bool SetupToolTip(ToolTipData data)
@@ -233,16 +330,34 @@ public class ToolTipObjTest : MonoBehaviour
 
 	private void CalculateToolTipElementSizes()
 	{
-		totalContentWidth = 0;
-		totalContentHeight = 0;
+
+		// TODO: Ideally we should not be dealing with the public Text and Image objects at all
+		// We should be working with the UI elements since they have been populated
+		// Need a better way to do this
+
+		totalContentWidth = borderX;
+		totalContentHeight = borderY;
 		smallTextYOffset = 0;
-		smallImageXOffset = 0;
+		smallImageXOffset = borderX;
 		// Before we start placing elements we need to add the specified borders
 		if (smallText != null && smallText.text.Length > 0) 
 		{
+			smallText.fontStyle = FontStyle.Normal;
 			totalContentWidth += smallText.rectTransform.rect.size.x;
 			totalContentHeight += smallText.rectTransform.rect.size.y;
 		}
+
+		// TODO: This is a very ugly way to do this, need to clean this up
+		// if we have something more to show
+		if ((smallImage != null && smallImage.sprite != null && smallImage.sprite.rect.size.x > 0) ||
+		    (detailedText != null && detailedText.text.Length > 0)) 
+		{
+			// AddingVerticalPadding, once here since any and all additional elements will come under the small text
+			totalContentHeight += paddingBetweenElementsY;
+			//Change the appearance of the small text to make it a heading
+			smallText.fontStyle = FontStyle.Bold;
+		}
+
 		smallTextYOffset = totalContentHeight;
 
 		if (smallImage != null && smallImage.sprite != null && smallImage.sprite.rect.size.x > 0) 
@@ -256,14 +371,14 @@ public class ToolTipObjTest : MonoBehaviour
 				detailedText.rectTransform.rect.size.x  : totalContentWidth;
 
 			totalContentHeight += smallImage.rectTransform.rect.size.y;
-			//smallImageXOffset += smallImage.rectTransform.rect.size.x + paddingBetweenElementsX;
-			smallImageXOffset += smallImage.rectTransform.rect.size.x;
+			smallImageXOffset += smallImage.rectTransform.rect.size.x + paddingBetweenElementsX;
+			//smallImageXOffset += smallImage.rectTransform.rect.size.x;
 		}
 
 		if (detailedText != null && detailedText.text.Length > 0) 
 		{
 			totalContentWidth = detailedText.rectTransform.rect.size.x + smallImageXOffset > totalContentWidth ? 
-				detailedText.rectTransform.rect.size.x + smallImageXOffset + borderX : totalContentWidth;
+				detailedText.rectTransform.rect.size.x + smallImageXOffset : totalContentWidth;
 			// Since the detailed text is placed under the small text, we update the height accordingly
 			totalContentHeight =  detailedText.rectTransform.rect.size.y + smallTextYOffset > totalContentHeight ? 
 				detailedText.rectTransform.rect.size.y + smallTextYOffset  : totalContentHeight; 
@@ -271,6 +386,9 @@ public class ToolTipObjTest : MonoBehaviour
 			//			detailedText.rectTransform.anchorMax = new Vector2(1.0f,0.5f);
 			//			detailedText.rectTransform.anchorMin = new Vector2(1.0f,0.5f);
 		}
+
+		totalContentWidth += borderX;
+		totalContentHeight += borderY;
 
 		Debug.Log ("<color=yellow>CalculateToolTipElementSizes: Final totalContentHeight: " +totalContentHeight+ "</color>");
 		Debug.Log ("<color=yellow>CalculateToolTipElementSizes: Final totalContentWidth: " +totalContentWidth+ "</color>");
@@ -282,16 +400,16 @@ public class ToolTipObjTest : MonoBehaviour
 	{
 		// Place the small text at the top left but offset by the border
 		smallText.rectTransform.pivot = new Vector2(0,1);
-		//smallText.rectTransform.anchorMax = new Vector2(0.0f + (borderX/totalContentWidth),1-(borderY/totalContentHeight));
-		//smallText.rectTransform.anchorMin = new Vector2(0.0f + (borderX/totalContentWidth),1-(borderY/totalContentHeight));
-		smallText.rectTransform.anchorMax = new Vector2(0,1);
-		smallText.rectTransform.anchorMin = new Vector2(0,1);
+		smallText.rectTransform.anchorMax = new Vector2(0.0f + (borderX/totalContentWidth),1-(borderY/totalContentHeight));
+		smallText.rectTransform.anchorMin = new Vector2(0.0f + (borderX/totalContentWidth),1-(borderY/totalContentHeight));
+		//smallText.rectTransform.anchorMax = new Vector2(0,1);
+		//smallText.rectTransform.anchorMin = new Vector2(0,1);
 
 		if (smallImage != null && smallImage.sprite!=null && smallImage.sprite.rect.size.x > 0) 
 		{
 			smallImage.rectTransform.pivot = new Vector2(0,1f);
-			smallImage.rectTransform.anchorMax = new Vector2 (0.0f , 1 - (smallTextYOffset / totalContentHeight));
-			smallImage.rectTransform.anchorMin = new Vector2 (0.0f , 1 - (smallTextYOffset / totalContentHeight));
+			smallImage.rectTransform.anchorMax = new Vector2 (0.0f  + (borderX/totalContentWidth), 1 - (smallTextYOffset / totalContentHeight));
+			smallImage.rectTransform.anchorMin = new Vector2 (0.0f  + (borderX/totalContentWidth), 1 - (smallTextYOffset / totalContentHeight));
 		}
 
 		if (detailedText != null && detailedText.text.Length > 0) 
@@ -458,6 +576,24 @@ public class ToolTipObjTest : MonoBehaviour
 
 
 
+	}
+
+	private void UpdateToolTipAnchor(ToolTipPlacementData requiredPlacement)
+	{
+		toolTipRectTransform.pivot = requiredPlacement.requiredPivot;
+		toolTipRectTransform.anchorMax = requiredPlacement.requiredAnchorMax;
+		toolTipRectTransform.anchorMin = requiredPlacement.requiredAnchorMin;
+		CheckIfWithinScreenBounds ();
+	}
+
+	private void CheckIfWithinScreenBounds()
+	{
+		Debug.Log (CanvasRect.rect.Contains (new Vector2 (toolTipRectTransform.rect.xMin, toolTipRectTransform.rect.yMin))); 
+		Debug.Log (CanvasRect.rect.Contains (new Vector2 (toolTipRectTransform.rect.xMax, toolTipRectTransform.rect.yMax))); 
+		Debug.Log ("Rect Pos: "+toolTipRectTransform.position);
+		Debug.Log ("Rect localPos: "+toolTipRectTransform.localPosition);
+		Debug.Log ("Rect Anchored Pos: "+toolTipRectTransform.anchoredPosition);
+		Debug.Log ("Rect Info: "+toolTipRectTransform.rect);
 	}
 
 
