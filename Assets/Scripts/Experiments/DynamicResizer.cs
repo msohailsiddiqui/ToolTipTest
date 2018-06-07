@@ -18,7 +18,7 @@ public class DynamicResizer : MonoBehaviour
 		int index = 0;
 		foreach (RectTransform rect in allRects) 
 		{
-			Debug.Log (index + ". " + rect.name);
+			//Debug.Log (index + ". " + rect.name);
 
 			//The First transform will be the object itself
 			if (index != 0) {

@@ -15,22 +15,6 @@ using UnityEngine.UI;
 //************************************************************************************
 
 
-public enum ToolTipElementType
-{
-	Text = 0,
-	Image,
-	Link
-}
-
-public enum ToolTipElementID
-{
-	SmallToolTipText = 0,
-	DetailedToolTipText,
-	SmallDescriptionImage,
-	LargeDescriptionImage,
-	HelpLinkURL
-}
-
 public class ToolTipData  
 {
 	

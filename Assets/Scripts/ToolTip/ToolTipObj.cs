@@ -34,7 +34,7 @@ public class ToolTipObj : MonoBehaviour
 	// For Example, if the preferred anchor is set to bottom right and the button trying to display the tool tip
 	// is located at the bottom right of the screen it will reposition it 
 	// This variable will contain the final anchor on which the tool tip can be displayed
-	private ToolTipAnchor selectedAnchor;
+	//private ToolTipAnchor selectedAnchor;
 
 	// Use this for initialization
 	void Start () 
@@ -84,7 +84,7 @@ public class ToolTipObj : MonoBehaviour
 		{
 			// if we have the right data copy it to our variables
 			toolTipSmallText.text = data.GetElement(ToolTipElementID.SmallToolTipText);
-			selectedAnchor = SelectAnchor (anchorToBeUsed, data);
+			//selectedAnchor = SelectAnchor (anchorToBeUsed, data);
 			gameObject.transform.position = new Vector3 (posToBeUsed.x, posToBeUsed.y, 0);
 			//CalculatePosition (posToBeUsed, selectedAnchor);
 			//CalculateSize ();
