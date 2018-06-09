@@ -53,7 +53,8 @@ public class BtnWithData : MonoBehaviour
 		Debug.Log ("<color=green>" + btnID + ": received focus</color>");
 		if (toolTipController != null) 
 		{
-			toolTipController.ToolTipNeedsToBeShown (gameObject.transform.position, toolTipData);
+			//toolTipController.ToolTipNeedsToBeShown (gameObject.transform.position, toolTipData);
+			toolTipController.ToolTipNeedsToBeShown (Input.mousePosition, toolTipData);
 		}
 	}
 

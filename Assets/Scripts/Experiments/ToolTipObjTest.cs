@@ -12,7 +12,6 @@ public class ToolTipObjTest : MonoBehaviour
 	public Text linkText;
 	public Image smallImage;
 	public Image largeImage;
-	public RectTransform CanvasRect;
 
     // Formatting variables for the tool tip
     // The space between the border of the tool tip and the content it conatins
@@ -21,7 +20,6 @@ public class ToolTipObjTest : MonoBehaviour
 	public uint paddingBetweenElementsX;
 	public uint paddingBetweenElementsY;
 
-	private float currentXOffset;
 	private float smallTextYOffset;
 	private float smallImageXOffset;
 
@@ -90,13 +88,6 @@ public class ToolTipObjTest : MonoBehaviour
     {
         return toolTipRectTransform;
     }
-	
-	// Update is called once per frame
-	void Update () 
-	{
-		
-
-	}
 
 	public bool SetupToolTip(ToolTipData data)
 	{

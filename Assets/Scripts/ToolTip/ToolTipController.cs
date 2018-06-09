@@ -82,6 +82,16 @@ using System;
 //************************************************************************************
 
 
+//************************************************************************************
+//========
+// Observed Behavior
+// 1. Tool tip is shown below the mouse pointer and is centered at the mouse X pos
+// 2. once the tool tip is displayed, the mouse can keep moving over the ui element but tool tip stays in the same position
+// 3. If tool tip is displayed and mouse moves to another object with tool tip, it displays the tool tip for that object
+// 4. Tool tip background has an outline
+// 5. 
+//========
+//************************************************************************************
 
 
 
@@ -129,7 +139,9 @@ public class ToolTipController : StateImplementor
 
 	// The reference to the tool tip object, that will actually show the tool tip
 	// This should not be a public reference, need to find a better way to do this
-	public ToolTipObj toolTipObj;
+	public GameObject toolTipPrefab;
+	public GameObject canvasObj;
+	private ToolTipObj toolTipObj;
 
 	// Need a variable for the initial delay after which tool tip will start appearing
 	public float tipAppearingDelay;
@@ -201,11 +213,6 @@ public class ToolTipController : StateImplementor
 		}
 	}
 
-//	public bool IsWaitingToBeShownGame
-//	{
-//		get { return currentState == WaitingToBeShown; }
-//	}
-
 	void InitializeStates()
 	{
 	
@@ -251,8 +258,19 @@ public class ToolTipController : StateImplementor
 		TipDisappearing.Update = new State.StateUpdate(TipDisappearing_Update);
 		TipDisappearing.OnStateEnded = new State.StateEnded(TipDisappearing_End);
 
+		GameObject temp = Instantiate (toolTipPrefab);
+		if (temp != null) 
+		{
+			toolTipObj = temp.GetComponent<ToolTipObj> ();
+			if (canvasObj != null && toolTipObj != null) 
+			{
+				toolTipObj.Initialize ();
+				toolTipObj.GetRectTransform ().SetParent (canvasObj.transform);
+			}
+		}
+
 		UpdateState(Initializing);
-		DebugStates ();
+		//DebugStates ();
 	}
 
 	protected override void UpdateState(State newState)
@@ -287,8 +305,7 @@ public class ToolTipController : StateImplementor
 
 		// Must set opacity to 0 ?? - Depends on animation
 
-		// TODO: Need to remove GetComponent Code from here
-		toolTipObj.GetComponent<ToolTipObj> ().Initialize ();
+		toolTipObj.Initialize ();
 
 		// Once finished initialization, wait for some element to ask for tool tip
 		// This waiting is done in the WaitingToBeCalled state
@@ -308,7 +325,7 @@ public class ToolTipController : StateImplementor
 	//
 	void WaitingToBeCalled_Begin()
 	{
-		DebugStates ();
+		//DebugStates ();
 	}
 
 	void WaitingToBeCalled_Update()
@@ -385,7 +402,7 @@ public class ToolTipController : StateImplementor
 
 	bool SmallTipFullyDisplayed_End(State nextState)
 	{
-		DebugStates ();
+		//DebugStates ();
 		return true;
 	}
 
@@ -413,7 +430,7 @@ public class ToolTipController : StateImplementor
 	{
 		
 		tipDisappearStartTime = Time.time;
-		Debug.Log ("<color = brown>ToolTipController::Tip is Disappearing: CurrentScale is: " + toolTipObj.transform.localScale.x+"</color>");
+		Debug.Log ("<color=brown>ToolTipController::Tip is Disappearing: CurrentScale is: " + toolTipObj.transform.localScale.x+"</color>");
 	}
 
 	void TipDisappearing_Update()
@@ -422,7 +439,8 @@ public class ToolTipController : StateImplementor
 		// but the user has taken away the focus. TheresmallTipAppearingDelayfore it 
 		// since currently the scale goes from 0 to 1, the delay can be multiplied by the scale to get the 
 		// updated delay
-		if (toolTipObj.transform.localScale.x > 0) {
+		if (toolTipObj.transform.localScale.x > 0)
+		{
 			float startingScale = toolTipObj.transform.localScale.x;
 			float tempTipDisappearDuration = startingScale * tipDisappearDuration;
 			float scaleVal = Mathf.Lerp (startingScale, 0, ((Time.time - tipDisappearStartTime) / tempTipDisappearDuration));
@@ -514,14 +532,24 @@ public class ToolTipController : StateImplementor
 
 			// We need to change the state so that it does not interfere with another call
 			UpdateState(WaitingToBeShown);
-			DebugStates ();
+			//DebugStates ();
 		}
 		else 
 		{
-			Debug.LogError ("ToolTipController::Trying to show a tool tip when it is not ready, ToolTipController state was: " + CurrentState.Name);
-			DebugStates ();
-			//Currently we are just showing a log 
-			//Need to handle this situation better
+			if (CurrentState == TipDisappearing) 
+			{
+				// This happens when the user quickly shifts from one UI element to another (or the same)
+				// and the disappearing duration is long 
+				Debug.Log ("<color=orange>ToolTipController::Trying to show a tool tip while it was disappearing</color>");
+			} 
+			else 
+			{
+				// Something unexpected happened. This should not be the case
+				// Currently we are just showing a log. Need to handle this situation better
+				Debug.LogError ("ToolTipController::Trying to show a tool tip when it is not ready, ToolTipController state was: " + CurrentState.Name);
+				DebugStates ();
+			}
+
 		}
 
 	}

@@ -3,22 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum ToolTipAnchor
-{
-	TopLeft = 0,
-	TopCenter,
-	TopRight,
-	BottomLeft,
-	BottomCenter,
-	BottomRight
-}
-
-//************************************************************************************
-// This class will serve as the base class that provides function to actually show the tool tip
-// This should be attached to a game object that has the needed elements to display the tool tip
-//************************************************************************************
-
-public class ToolTipObj : MonoBehaviour 
+public class MergedToolTipObj : MonoBehaviour 
 {
 	public Image bgImage;
 	public Text smallText;
@@ -71,13 +56,8 @@ public class ToolTipObj : MonoBehaviour
 	// This variable will contain the final anchor on which the tool tip can be displayed
 	//private ToolTipAnchor selectedAnchor;
 
-	public RectTransform GetRectTransform()
-	{
-		return toolTipRectTransform;
-	}
-
-	//Need to move things from start to Initialize
-	public void Initialize()
+	// Use this for initialization
+	void Start () 
 	{
 		if (bgImage == null) 
 		{
@@ -131,9 +111,21 @@ public class ToolTipObj : MonoBehaviour
 		uiElementsDict.Add (ToolTipElementID.SmallDescriptionImage, smallImageUI);
 
 		toolTipRectTransform = GetComponent<RectTransform> ();
+	}
 
+	public RectTransform GetRectTransform()
+	{
+		return toolTipRectTransform;
+	}
+
+	//Need to move things from start to Initialize
+	public void Initialize()
+	{
 		gameObject.transform.localScale = new Vector3 (0, 0, 0);
-
+		if (bgImage != null) 
+		{
+			//bgImage.GetComponent<>
+		}
 	}
 
 	public bool SetupToolTip (Vector2 posToBeUsed, ToolTipData data, ToolTipAnchor anchorToBeUsed)
