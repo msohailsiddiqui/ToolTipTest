@@ -161,33 +161,33 @@ public class MergedToolTipObj : MonoBehaviour
 		//*************************************************************************
 		// From ObjTest
 		//*************************************************************************
-		ResetToolTip ();
-		if (!data.HasElement (ToolTipElementID.SmallToolTipText)) 
-		{
-			return false;	
+		//ResetToolTip ();
+		//if (!data.HasElement (ToolTipElementID.SmallToolTipText)) 
+		//{
+		//	return false;	
 
-		}
-		uiElementsDict [ToolTipElementID.SmallToolTipText].textElement.text = data.GetElement(ToolTipElementID.SmallToolTipText);
-		uiElementsDict [ToolTipElementID.SmallToolTipText].UpdateElement ();
+		//}
+		//uiElementsDict [ToolTipElementID.SmallToolTipText].textElement.text = data.GetElement(ToolTipElementID.SmallToolTipText);
+		//uiElementsDict [ToolTipElementID.SmallToolTipText].UpdateElement ();
 
-		if (data.HasElement (ToolTipElementID.SmallDescriptionImage)) 
-		{
-			//Debug.Log ("ToolTipObjTest::SetupToolTip:Data has small image: "+data.GetElement (ToolTipElementID.SmallDescriptionImage));
+		//if (data.HasElement (ToolTipElementID.SmallDescriptionImage)) 
+		//{
+		//	//Debug.Log ("ToolTipObjTest::SetupToolTip:Data has small image: "+data.GetElement (ToolTipElementID.SmallDescriptionImage));
 
-			Sprite tempSprite = Resources.Load (data.GetElement (ToolTipElementID.SmallDescriptionImage), typeof(Sprite)) as Sprite;
-			//Debug.Log ("ToolTipObjTest::SetupToolTip:small image: "+tempSprite);
-			//Debug.Log ("ToolTipObjTest::SetupToolTip:small image size: "+tempSprite.rect.size );
-			uiElementsDict [ToolTipElementID.SmallDescriptionImage].imageElement.sprite = tempSprite;
-			uiElementsDict [ToolTipElementID.SmallDescriptionImage].UpdateElement ();
-		}
-		if (data.HasElement (ToolTipElementID.DetailedToolTipText)) 
-		{
-			uiElementsDict [ToolTipElementID.DetailedToolTipText].textElement.text = data.GetElement(ToolTipElementID.DetailedToolTipText);
-			uiElementsDict [ToolTipElementID.DetailedToolTipText].UpdateElement ();
-		}
+		//	Sprite tempSprite = Resources.Load (data.GetElement (ToolTipElementID.SmallDescriptionImage), typeof(Sprite)) as Sprite;
+		//	//Debug.Log ("ToolTipObjTest::SetupToolTip:small image: "+tempSprite);
+		//	//Debug.Log ("ToolTipObjTest::SetupToolTip:small image size: "+tempSprite.rect.size );
+		//	uiElementsDict [ToolTipElementID.SmallDescriptionImage].imageElement.sprite = tempSprite;
+		//	uiElementsDict [ToolTipElementID.SmallDescriptionImage].UpdateElement ();
+		//}
+		//if (data.HasElement (ToolTipElementID.DetailedToolTipText)) 
+		//{
+		//	uiElementsDict [ToolTipElementID.DetailedToolTipText].textElement.text = data.GetElement(ToolTipElementID.DetailedToolTipText);
+		//	uiElementsDict [ToolTipElementID.DetailedToolTipText].UpdateElement ();
+		//}
 
-		UpdateToolTip ();
-		return true;
+		//UpdateToolTip ();
+		//return true;
 	}
 
 	public void ResetToolTip()

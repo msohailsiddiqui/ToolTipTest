@@ -132,9 +132,12 @@ public class ToolTipObj : MonoBehaviour
 
 		toolTipRectTransform = GetComponent<RectTransform> ();
 
-		gameObject.transform.localScale = new Vector3 (0, 0, 0);
+        toolTipRectTransform.localScale = new Vector3 (0, 0, 0);
 
-	}
+        UpdateRectTransform();
+
+
+    }
 
 	public bool SetupToolTip (Vector2 posToBeUsed, ToolTipData data, ToolTipAnchor anchorToBeUsed)
 	{
@@ -150,27 +153,30 @@ public class ToolTipObj : MonoBehaviour
 			return false;
 		}
 
-		//Check if the bare minimum data is present (small tool tip text)
-		if (data.HasElement (ToolTipElementID.SmallToolTipText)) 
-		{
-			// if we have the right data copy it to our variables
-			smallText.text = data.GetElement(ToolTipElementID.SmallToolTipText);
-			//selectedAnchor = SelectAnchor (anchorToBeUsed, data);
-			gameObject.transform.position = new Vector3 (posToBeUsed.x, posToBeUsed.y, 0);
-			//CalculatePosition (posToBeUsed, selectedAnchor);
-			//CalculateSize ();
-			return true;
-		} 
-		else 
-		{
-			return false;
-		}
+		////Check if the bare minimum data is present (small tool tip text)
+		//if (data.HasElement (ToolTipElementID.SmallToolTipText)) 
+		//{
+		//	// if we have the right data copy it to our variables
+		//	smallText.text = data.GetElement(ToolTipElementID.SmallToolTipText);
+		//	//selectedAnchor = SelectAnchor (anchorToBeUsed, data);
+		//	gameObject.transform.position = new Vector3 (posToBeUsed.x, posToBeUsed.y, 0);
+		//	//CalculatePosition (posToBeUsed, selectedAnchor);
+		//	//CalculateSize ();
+		//	return true;
+		//} 
+		//else 
+		//{
+		//	return false;
+		//}
 
 		//*************************************************************************
 		// From ObjTest
 		//*************************************************************************
 		ResetToolTip ();
-		if (!data.HasElement (ToolTipElementID.SmallToolTipText)) 
+        Debug.Log("Position on which tool tip will be placed: " + posToBeUsed+ ", Screen width: "+Screen.width+ ", Screen height: "+Screen.height);
+        toolTipRectTransform.anchoredPosition = new Vector2(posToBeUsed.x, posToBeUsed.y);
+        //gameObject.transform.position = new Vector3(posToBeUsed.x, posToBeUsed.y, 0);
+        if (!data.HasElement (ToolTipElementID.SmallToolTipText)) 
 		{
 			return false;	
 
@@ -200,6 +206,7 @@ public class ToolTipObj : MonoBehaviour
 
 	public void ResetToolTip()
 	{
+        // Clear the ui elements 
 		smallText.text = "";
 		if (uiElementsDict.ContainsKey (ToolTipElementID.SmallToolTipText)) 
 		{
@@ -224,7 +231,8 @@ public class ToolTipObj : MonoBehaviour
 		{
 			uiElementsDict [ToolTipElementID.HelpLinkURL].ResetElement ();
 		}
-
+        
+        // This will reset the main tool tip as well
 		UpdateToolTip ();
 	}
 
@@ -306,11 +314,11 @@ public class ToolTipObj : MonoBehaviour
 		totalContentWidth += borderX;
 		totalContentHeight += borderY;
 
-		//Debug.Log ("<color=yellow>CalculateToolTipElementSizes: Final totalContentHeight: " +totalContentHeight+ "</color>");
-		//Debug.Log ("<color=yellow>CalculateToolTipElementSizes: Final totalContentWidth: " +totalContentWidth+ "</color>");
-		//Debug.Log ("<color=orange>smallTextYOffset: "+smallTextYOffset+ "</color>");
-		//Debug.Log ("<color=orange>smallTextYOffset: "+smallImageXOffset+ "</color>");
-	}
+        Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentHeight: " + totalContentHeight + "</color>");
+        Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentWidth: " + totalContentWidth + "</color>");
+        //Debug.Log ("<color=orange>smallTextYOffset: "+smallTextYOffset+ "</color>");
+        //Debug.Log ("<color=orange>smallTextYOffset: "+smallImageXOffset+ "</color>");
+    }
 
 	private void PositionToolTipElements()
 	{
@@ -493,5 +501,11 @@ public class ToolTipObj : MonoBehaviour
 
 	}
 
+    private void UpdateRectTransform()
+    {
+        toolTipRectTransform.pivot = CurrentToolTipPlacement.RequiredPivot;
+        toolTipRectTransform.anchorMax = CurrentToolTipPlacement.RequiredAnchorMax;
+        toolTipRectTransform.anchorMin = CurrentToolTipPlacement.RequiredAnchorMin;
+    }
 
 }

@@ -185,7 +185,7 @@ public class ToolTipController : StateImplementor
 	#endregion
 
 
-	#region ToolTip States
+	#region ToolTipController States
 
 	State Initializing;
 	State WaitingToBeCalled;
@@ -265,7 +265,7 @@ public class ToolTipController : StateImplementor
 			if (canvasObj != null && toolTipObj != null) 
 			{
 				toolTipObj.Initialize ();
-				toolTipObj.GetRectTransform ().SetParent (canvasObj.transform);
+                toolTipObj.GetRectTransform ().SetParent (canvasObj.transform);
 			}
 		}
 
@@ -468,24 +468,6 @@ public class ToolTipController : StateImplementor
 
 	#endregion
 
-	#region Game State Handlers
-
-//	public void StartGame()
-//	{
-//		UpdateState(WaitingToBeCalled);
-//	}
-//
-//	public void PlayGame()
-//	{
-//		UpdateState(WaitingToBeShown);
-//	}
-//
-//	public void EndCurrentGame()
-//	{
-//		UpdateState(SmallTipAppearing);
-//	}
-
-	#endregion
 
 	#region Helper Functions
 
@@ -523,6 +505,7 @@ public class ToolTipController : StateImplementor
 //				return;
 //			}
 
+            
 			if (!toolTipObj.SetupToolTip (positionOnScreen, data, preferredToolTipAnchor)) 
 			{
 				Debug.LogError ("ToolTipContorller::Invalid Tool Tip Data!");

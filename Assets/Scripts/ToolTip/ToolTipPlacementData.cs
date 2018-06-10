@@ -24,7 +24,15 @@ public class ToolTipPlacementData : UIElementPlacementData
 {
     public ToolTipPlacementData()
     {
+        // by default we want the tool tip to be anchored at the bottom left (0,0)
+        // and pivoted at the top left (0,1), this means that horizontal placement will be Left, 
+        // Vertical Placement to be bottom and direction to be Left To Right
 
+        HorizontalPlacement = UIElementHorizontalPlacement.Left;
+        VerticalPlacement = UIElementVerticalPlacement.Bottom;
+        HorizontalDirection = UIElementHorizontalDirection.LeftToRight;
+
+        UpdatePivotAndAnchors();
     }
     public ToolTipPlacementData(UIElementHorizontalPlacement _horizontalPlacement, UIElementVerticalPlacement _verticalPlacement,
         UIElementHorizontalDirection _horizontalDirection)

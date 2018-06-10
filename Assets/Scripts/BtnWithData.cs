@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+// TODO: This should not be a mono behavior
 public class BtnWithData : MonoBehaviour 
 {
 	public string btnID;
 
 	public string logToShow;
 
-	//TODO: This sould not be public nstead get it from a reference manager
+	//TODO: This sould not be public instead get it from a reference manager
 	public ToolTipController toolTipController;
 
 
@@ -51,6 +53,7 @@ public class BtnWithData : MonoBehaviour
 	public void OnReceiveFocus()
 	{
 		Debug.Log ("<color=green>" + btnID + ": received focus</color>");
+        // TODO: Add check if we have some data that needs to be shown
 		if (toolTipController != null) 
 		{
 			//toolTipController.ToolTipNeedsToBeShown (gameObject.transform.position, toolTipData);
