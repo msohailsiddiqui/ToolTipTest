@@ -41,6 +41,11 @@ using System;
 //                           // from the element displaying the tooltip
 // TipDisappearing           // This is the state in which the tip was being displayed or has been completely displayed
 //                           // but has taken focus away from the element hence the tool tip now needs to disappear
+// WaitingToBeHidden         // When ever a tool tip needs to be hidden (UI element has lost focus), we dont hide it immediately
+//                           // Instead we wait for a delay after which the tool tip will be hidden. This also works well for the scenario
+//                           // Where a new tool tip needs to be shown immediately
+// ShiftToolTip              // This is used when a tool tip is already displayed on an UI element and user quickly shifts to another element
+//                           // This is a special scenario in which we don't show the appearing animation and show the small description fully
 // Error                     // If something bad happens we transfer to this state and stay there, so that it is easier to debug
 //************************************************************************************
 
@@ -95,7 +100,7 @@ using System;
 
 
 
-public enum ToolTipState
+public enum ToolTipControllerState
 {
 	Initializing = 0,          // Error checking and initialization, make sure we have everything we need
 	WaitingToBeCalled,         // This will be the most common state, in which the Tool Tip is waiting to be invoked
@@ -115,8 +120,13 @@ public enum ToolTipState
 	                           // element it will move to the detailed tip appearing state (If a detailed tip is available)
 	DetailedTipFullyDisplayed, // This is the state in which the tip has appeared completely but has not taken focus away 
 	                           // from the element displaying the tooltip
+    WaitingToBeHidden,         // When ever a tool tip needs to be hidden (UI element has lost focus), we dont hide it immediately
+                               // Instead we wait for a delay after which the tool tip will be hidden. This also works well for the scenario
+                               // Where a new tool tip needs to be shown immediately
 	TipDisappearing,           // This is the state in which the tip was being displayed or has been completely displayed
 	                           // but has taken focus away from the element hence the tool tip now needs to disappear
+    ShiftToolTip,              // This is used when a tool tip is already displayed on an UI element and user quickly shifts to another element
+                               // This is a special scenario in which we don't show the appearing animation and show the small description fully
 	Error                      // If something bad happens we transfer to this state and stay there, so that it is easier to debug
 }
 
@@ -125,26 +135,28 @@ public class ToolTipController : StateImplementor
 
 	#region Events/ Delegates
 
-	public static event Action <ToolTipState> OnToolTipStateChanged;
+	public static event Action <ToolTipControllerState> OnToolTipStateChanged;
 
 	#endregion
 	#region Member Variables
 
-	// Preferred anchor of the tooltip
-	// The ToolTipController will try to position the tool tip as per the specified anchor but the tool tip object will
+	// Preferred placement of the tooltip
+	// The ToolTipController will try to position the tool tip as per the specified placement but the tool tip object will
 	// update it if there isn't enough space to display it on this anchor
-	// For Example, if the preferred anchor is set to bottom right and the button trying to display the tool tip
+	// For Example, if the preferred placement is set to bottom right and the button trying to display the tool tip
 	// is located at the bottom right of the screen it will reposition it 
-	public ToolTipAnchor preferredToolTipAnchor;
+	public ToolTipPlacementData preferredToolTipPlacement;
 
 	// The reference to the tool tip object, that will actually show the tool tip
 	// This should not be a public reference, need to find a better way to do this
 	public GameObject toolTipPrefab;
 	public GameObject canvasObj;
-	private ToolTipObj toolTipObj;
+    public GameObject animationHelperPrefab;
+    private ToolTipObj toolTipObj;
+    private AnimationHelper animationHelper;
 
-	// Need a variable for the initial delay after which tool tip will start appearing
-	public float tipAppearingDelay;
+    // Need a variable for the initial delay after which tool tip will start appearing
+    public float tipAppearingDelay;
 	private float tipWaitingStartTime;
 
 	// Need a variable for the time in which the small tool tip will appear
@@ -160,23 +172,44 @@ public class ToolTipController : StateImplementor
 	public float tipDisappearDuration;
 	private float tipDisappearStartTime;
 
-	// Need a Dictionary that stores the tool tip data
+    // Variable that stores the offset we need to add to the mouse position
+    // The mouse cursor image is shown at the mouse position and it is pivoted at the top left
+    // this is need so that the tool tip does not overalp the mouse cursor image
+    // The default mouse cursor size in Unity is 32x32, this can be updated for custom cursors
+    public float mouseCursorOffsetX;
+    public float mouseCursorOffsetY;
 
-	// Need a variable that stores the positioning information of the tool tip relative to the element that shows it
+    // Need a variable for the delay after which tool tip will start disappearing
+    public float tipDisappearingDelay;
+    private float tipDisappearWaitingStartTime;
 
-	// Need a variable that stores the position of the element on which we are trying to show the tool tip
+    // Delay in which we shift the tool tip and get the new mouse coords
+    public float shiftToolTipDelay;
+    private float shiftToolTipStartTime;
+    private ToolTipData dataToUseForShift;
 
-	// Might need a variable (boolean) that allows resizing of image data
+    // stores the animation ID of the appear animation, so that it can be stopped when needed
+    // In the case where tool tip disappears before appearing completely
+    private float appearAnimID;
+    private float disappearAnimID;
 
-	// Might need a variable that defines the max size possible for image data
-	// and will try to resize if the supplied image data is larger than the max size
-	// This might be constrained by the screen size
+    // Need a Dictionary that stores the tool tip data
 
-	#endregion
+    // Need a variable that stores the positioning information of the tool tip relative to the element that shows it
 
-	#region Unity Methods
+    // Need a variable that stores the position of the element on which we are trying to show the tool tip
 
-	protected override void Start () 
+    // Might need a variable (boolean) that allows resizing of image data
+
+    // Might need a variable that defines the max size possible for image data
+    // and will try to resize if the supplied image data is larger than the max size
+    // This might be constrained by the screen size
+
+    #endregion
+
+    #region Unity Methods
+
+    protected override void Start () 
 	{
 		base.Start();
 		InitializeStates();
@@ -190,15 +223,18 @@ public class ToolTipController : StateImplementor
 	State Initializing;
 	State WaitingToBeCalled;
 	State SetupToolTip;
-	State WaitingToBeShown;
-	State SmallTipAppearing;
-	State SmallTipFullyDisplayed;
-	State DetailedTipAppearing;
-	State DetailedTipFullyDisplayed;
-	State TipDisappearing;
+    State WaitingToBeShown;
+    State SmallTipAppearing;
+    State SmallTipFullyDisplayed;
+    State DetailedTipAppearing;
+    State DetailedTipFullyDisplayed;
+    State WaitingToBeHidden;
+    State TipDisappearing;
+    State ShiftToolTip;
 
-	#region State Management
-	public ToolTipState CurrentToolTipState
+    #endregion
+    #region State Management
+    public ToolTipControllerState CurrentToolTipControllerState
 	{
 		get {
 			if( CurrentState == null)
@@ -206,59 +242,68 @@ public class ToolTipController : StateImplementor
 				Debug.LogError("ToolTip::CurrentToolTipState is null which should not be so");
 				UpdateState( Initializing);
 
-				return ToolTipState.Initializing;
+				return ToolTipControllerState.Initializing;
 			}
 
-			return (ToolTipState)CurrentState.StateId; 
+			return (ToolTipControllerState)CurrentState.StateId; 
 		}
 	}
 
 	void InitializeStates()
 	{
-	
-		Initializing = new State(ToolTipState.Initializing.ToString(), (int)ToolTipState.Initializing);
+		Initializing = new State(ToolTipControllerState.Initializing.ToString(), (int)ToolTipControllerState.Initializing);
 		Initializing.OnStateBegin = new State.StateBegin(Initializing_Begin);
 		Initializing.OnStateEnded = new State.StateEnded(Initializing_End);
 
-		WaitingToBeCalled = new State(ToolTipState.WaitingToBeCalled.ToString(), (int)ToolTipState.WaitingToBeCalled);
+		WaitingToBeCalled = new State(ToolTipControllerState.WaitingToBeCalled.ToString(), (int)ToolTipControllerState.WaitingToBeCalled);
 		WaitingToBeCalled.OnStateBegin = new State.StateBegin(WaitingToBeCalled_Begin);
 		WaitingToBeCalled.Update = new State.StateUpdate(WaitingToBeCalled_Update);
 		WaitingToBeCalled.OnStateEnded = new State.StateEnded(WaitingToBeCalled_End);
 
-		SetupToolTip = new State(ToolTipState.SetupToolTip.ToString(), (int)ToolTipState.SetupToolTip);
+		SetupToolTip = new State(ToolTipControllerState.SetupToolTip.ToString(), (int)ToolTipControllerState.SetupToolTip);
 		SetupToolTip.OnStateBegin = new State.StateBegin(SetupToolTip_Begin);
 		SetupToolTip.Update = new State.StateUpdate(SetupToolTip_Update);
 		SetupToolTip.OnStateEnded = new State.StateEnded(SetupToolTip_End);
 
-		WaitingToBeShown = new State(ToolTipState.WaitingToBeShown.ToString(), (int)ToolTipState.WaitingToBeShown);
+		WaitingToBeShown = new State(ToolTipControllerState.WaitingToBeShown.ToString(), (int)ToolTipControllerState.WaitingToBeShown);
 		WaitingToBeShown.OnStateBegin = new State.StateBegin(WaitingToBeShown_Begin);
 		WaitingToBeShown.Update = new State.StateUpdate(WaitingToBeShown_Update);
 		WaitingToBeShown.OnStateEnded = new State.StateEnded(WaitingToBeShown_End);
 
-		SmallTipAppearing = new State(ToolTipState.SmallTipAppearing.ToString(), (int)ToolTipState.SmallTipAppearing);
+		SmallTipAppearing = new State(ToolTipControllerState.SmallTipAppearing.ToString(), (int)ToolTipControllerState.SmallTipAppearing);
 		SmallTipAppearing.OnStateBegin = new State.StateBegin(SmallTipAppearing_Begin);
 		SmallTipAppearing.Update = new State.StateUpdate(SmallTipAppearing_Update);
 		SmallTipAppearing.OnStateEnded = new State.StateEnded(SmallTipAppearing_End);
 
-		SmallTipFullyDisplayed = new State(ToolTipState.SmallTipFullyDisplayed.ToString(), (int)ToolTipState.SmallTipFullyDisplayed);
+		SmallTipFullyDisplayed = new State(ToolTipControllerState.SmallTipFullyDisplayed.ToString(), (int)ToolTipControllerState.SmallTipFullyDisplayed);
 		SmallTipFullyDisplayed.OnStateBegin = new State.StateBegin(SmallTipFullyDisplayed_Begin);
 		SmallTipFullyDisplayed.Update = new State.StateUpdate(SmallTipFullyDisplayed_Update);
 		SmallTipFullyDisplayed.OnStateEnded = new State.StateEnded(SmallTipFullyDisplayed_End);
 
-		DetailedTipAppearing = new State(ToolTipState.DetailedTipAppearing.ToString(), (int)ToolTipState.DetailedTipAppearing);
+		DetailedTipAppearing = new State(ToolTipControllerState.DetailedTipAppearing.ToString(), (int)ToolTipControllerState.DetailedTipAppearing);
 		DetailedTipAppearing.OnStateBegin = new State.StateBegin(DetailedTipAppearing_Begin);
 		DetailedTipAppearing.OnStateEnded = new State.StateEnded(DetailedTipAppearing_End);
 
-		DetailedTipFullyDisplayed = new State(ToolTipState.DetailedTipFullyDisplayed.ToString(), (int)ToolTipState.DetailedTipFullyDisplayed);
+		DetailedTipFullyDisplayed = new State(ToolTipControllerState.DetailedTipFullyDisplayed.ToString(), (int)ToolTipControllerState.DetailedTipFullyDisplayed);
 		DetailedTipFullyDisplayed.OnStateBegin = new State.StateBegin(DetailedTipFullyDisplayed_Begin);
 		DetailedTipFullyDisplayed.OnStateEnded = new State.StateEnded(DetailedTipFullyDisplayed_End);
 
-		TipDisappearing = new State(ToolTipState.TipDisappearing.ToString(), (int)ToolTipState.TipDisappearing);
+        WaitingToBeHidden = new State(ToolTipControllerState.WaitingToBeHidden.ToString(), (int)ToolTipControllerState.WaitingToBeHidden);
+        WaitingToBeHidden.OnStateBegin = new State.StateBegin(WaitingToBeHidden_Begin);
+        WaitingToBeHidden.Update = new State.StateUpdate(WaitingToBeHidden_Update);
+        WaitingToBeHidden.OnStateEnded = new State.StateEnded(WaitingToBeHidden_End);
+
+        TipDisappearing = new State(ToolTipControllerState.TipDisappearing.ToString(), (int)ToolTipControllerState.TipDisappearing);
 		TipDisappearing.OnStateBegin = new State.StateBegin(TipDisappearing_Begin);
 		TipDisappearing.Update = new State.StateUpdate(TipDisappearing_Update);
 		TipDisappearing.OnStateEnded = new State.StateEnded(TipDisappearing_End);
 
-		GameObject temp = Instantiate (toolTipPrefab);
+        ShiftToolTip = new State(ToolTipControllerState.ShiftToolTip.ToString(), (int)ToolTipControllerState.ShiftToolTip);
+        ShiftToolTip.OnStateBegin = new State.StateBegin(ShiftToolTip_Begin);
+        ShiftToolTip.Update = new State.StateUpdate(ShiftToolTip_Update);
+        ShiftToolTip.OnStateEnded = new State.StateEnded(ShiftToolTip_End);
+
+        GameObject temp = Instantiate (toolTipPrefab);
 		if (temp != null) 
 		{
 			toolTipObj = temp.GetComponent<ToolTipObj> ();
@@ -269,7 +314,14 @@ public class ToolTipController : StateImplementor
 			}
 		}
 
-		UpdateState(Initializing);
+        temp = Instantiate(animationHelperPrefab);
+        if (temp != null)
+        {
+            animationHelper = temp.GetComponent<AnimationHelper>();
+        }
+
+
+            UpdateState(Initializing);
 		//DebugStates ();
 	}
 
@@ -281,7 +333,7 @@ public class ToolTipController : StateImplementor
 		{
 			if (OnToolTipStateChanged != null)
 			{
-				OnToolTipStateChanged(CurrentToolTipState);
+				OnToolTipStateChanged(CurrentToolTipControllerState);
 			}
 		}
 	}
@@ -368,25 +420,43 @@ public class ToolTipController : StateImplementor
 		return (nextState == SmallTipFullyDisplayed || nextState == SmallTipAppearing || nextState == TipDisappearing);
 	}
 
-	// SmallTipAppearing State
-	void SmallTipAppearing_Begin()
+    // SmallTipAppearing State
+    void SmallTipAppearing_Begin()
 	{
+        //Debug.Log("ToolTipController::SmallTipAppearing_Begin: Mouse Position: " + Input.mousePosition);
+        Vector2 posForToolTip = new Vector2(Input.mousePosition.x + mouseCursorOffsetX,
+                                            Input.mousePosition.y - mouseCursorOffsetY );
+
+        toolTipObj.ShowToolTip(posForToolTip);
 		smallTipAppearStartTime = Time.time;
-	}
+
+        if(animationHelper != null)
+            appearAnimID = animationHelper.AnimateScale(toolTipObj.transform, 0, 1, smallTipAppearingDelay, EasingType.SmootherLerp, AppearAnimationComplete);
+    }
 
 	void SmallTipAppearing_Update()
 	{
-		float scaleVal = Mathf.Lerp (0, 1, ((Time.time - smallTipAppearStartTime) / smallTipAppearingDelay));
-		toolTipObj.transform.localScale = new Vector3 (scaleVal, scaleVal, scaleVal);
-		if (Time.time > smallTipAppearStartTime + smallTipAppearingDelay) 
-		{
-			UpdateState (SmallTipFullyDisplayed);
-		}
+        //float scaleVal = Mathf.Lerp (0, 1, ((Time.time - smallTipAppearStartTime) / smallTipAppearingDelay));
+        //float scaleVal = Easing.SmootherStepF(0, 1, ((Time.time - smallTipAppearStartTime) / smallTipAppearingDelay));
+
+        //toolTipObj.transform.localScale = new Vector3 (scaleVal, scaleVal, scaleVal);
+        
+
+        //if (Time.time > smallTipAppearStartTime + smallTipAppearingDelay) 
+		//{
+			
+		//}
 	}
 
 	bool SmallTipAppearing_End(State nextState)
 	{
-		return (nextState == SmallTipFullyDisplayed || nextState == TipDisappearing);
+        if(nextState != SmallTipFullyDisplayed)
+        {
+            //The Appearing animation did not get the chance to complete
+            // We Need to Stop the animation (cancel animation Coroutine)
+            animationHelper.StopAnimation(appearAnimID);
+        }
+		return (nextState == SmallTipFullyDisplayed || nextState == WaitingToBeHidden);
 	}
 
 	void SmallTipFullyDisplayed_Begin()
@@ -426,12 +496,32 @@ public class ToolTipController : StateImplementor
 		return true;
 	}
 
-	void TipDisappearing_Begin()
+    void WaitingToBeHidden_Begin()
+    {
+        tipDisappearWaitingStartTime = Time.time;
+    }
+
+    void WaitingToBeHidden_Update()
+    {
+        if (Time.time > tipDisappearWaitingStartTime + tipDisappearingDelay)
+        {
+            UpdateState(TipDisappearing);
+        }
+    }
+
+    bool WaitingToBeHidden_End(State nextState)
+    {
+        return true;
+    }
+
+    void TipDisappearing_Begin()
 	{
-		
-		tipDisappearStartTime = Time.time;
+        tipDisappearStartTime = Time.time;
 		Debug.Log ("<color=brown>ToolTipController::Tip is Disappearing: CurrentScale is: " + toolTipObj.transform.localScale.x+"</color>");
-	}
+        float startingScale = toolTipObj.transform.localScale.x;
+        if (animationHelper != null)
+            disappearAnimID = animationHelper.AnimateScale(toolTipObj.transform, startingScale, 0, startingScale * tipDisappearDuration, EasingType.SmootherLerp, DisappearAnimationComplete);
+    }
 
 	void TipDisappearing_Update()
 	{
@@ -439,45 +529,79 @@ public class ToolTipController : StateImplementor
 		// but the user has taken away the focus. TheresmallTipAppearingDelayfore it 
 		// since currently the scale goes from 0 to 1, the delay can be multiplied by the scale to get the 
 		// updated delay
-		if (toolTipObj.transform.localScale.x > 0)
-		{
-			float startingScale = toolTipObj.transform.localScale.x;
-			float tempTipDisappearDuration = startingScale * tipDisappearDuration;
-			float scaleVal = Mathf.Lerp (startingScale, 0, ((Time.time - tipDisappearStartTime) / tempTipDisappearDuration));
-			toolTipObj.transform.localScale = new Vector3 (scaleVal, scaleVal, scaleVal);
-			//TODO: This should be dependent on the animation finishing instead of the time
-			if (Time.time > tipDisappearStartTime + tempTipDisappearDuration) 
-			{
-				toolTipObj.ResetToolTip ();
-				UpdateState (WaitingToBeCalled);
-			}
-		}
-		else 
-		{
-			toolTipObj.ResetToolTip ();
-			UpdateState (WaitingToBeCalled);
-		}
+		//if (toolTipObj.transform.localScale.x > 0)
+		//{
+		//	float startingScale = toolTipObj.transform.localScale.x;
+		//	float tempTipDisappearDuration = startingScale * tipDisappearDuration;
+		//	//float scaleVal = Mathf.Lerp (startingScale, 0, ((Time.time - tipDisappearStartTime) / tempTipDisappearDuration));
+		//	//toolTipObj.transform.localScale = new Vector3 (scaleVal, scaleVal, scaleVal);
+		//	//TODO: This should be dependent on the animation finishing instead of the time
+		//	if (Time.time > tipDisappearStartTime + tempTipDisappearDuration) 
+		//	{
+		//		toolTipObj.ResetToolTip ();
+		//		UpdateState (WaitingToBeCalled);
+		//	}
+		//}
+		//else 
+		//{
+		//	toolTipObj.ResetToolTip ();
+		//	UpdateState (WaitingToBeCalled);
+		//}
 	}
 
 	bool TipDisappearing_End(State nextState)
 	{
-		return true;
+        return true;
 	}
 
-	#endregion
+    void ShiftToolTip_Begin()
+    {
+        shiftToolTipStartTime = Time.time;
+    }
 
-	#endregion
+    void ShiftToolTip_Update()
+    {
+        if(Time.time > shiftToolTipStartTime + shiftToolTipDelay)
+        {
+           
+
+            if(toolTipObj.SetupToolTip(dataToUseForShift, null))
+            {
+                //Get the new mouse pos 
+                Debug.Log("<color=blue>ToolTipController::From ShiftToolTip, updating state to SmallTipFullyDisplayed</color>");
+                Vector2 posForToolTip = new Vector2(Input.mousePosition.x + mouseCursorOffsetX,
+                                               Input.mousePosition.y - mouseCursorOffsetY);
+                toolTipObj.ShowToolTip(posForToolTip);
+                toolTipObj.GetRectTransform().localScale = Vector3.one;
+                UpdateState(SmallTipFullyDisplayed);
+            }
+            else
+            {
+                Debug.Log("<color=blue>ToolTipController::From ShiftToolTip, updating state to WaitingToBeCalled</color>");
+                UpdateState(WaitingToBeCalled);
+            }
+            
+        }
+
+    }
+
+    bool ShiftToolTip_End(State nextState)
+    {
+        return true;
+    }
+
+    #endregion
 
 
-	#region Helper Functions
+    #region Helper Functions
 
 
-	#endregion
+    #endregion
 
-	#region FunctionsThatOtherModulesWillCall
+    #region FunctionsThatOtherModulesWillCall
 
-	//Other modules/elements that can display a tool tip will call this 
-	public void ToolTipNeedsToBeShown(Vector2 positionOnScreen, ToolTipData data)
+    //Other modules/elements that can display a tool tip will call this 
+    public void ToolTipNeedsToBeShown(Vector2 positionOnScreen, ToolTipData data)
 	{
 		// TODO: Add a return Status
 		// This might return a status based on validation of the data
@@ -506,7 +630,7 @@ public class ToolTipController : StateImplementor
 //			}
 
             
-			if (!toolTipObj.SetupToolTip (positionOnScreen, data, preferredToolTipAnchor)) 
+			if (!toolTipObj.SetupToolTip ( data, preferredToolTipPlacement)) 
 			{
 				Debug.LogError ("ToolTipContorller::Invalid Tool Tip Data!");
 				return;
@@ -519,12 +643,37 @@ public class ToolTipController : StateImplementor
 		}
 		else 
 		{
-			if (CurrentState == TipDisappearing) 
+            if (CurrentState == WaitingToBeShown || CurrentState == SmallTipAppearing || CurrentState == SmallTipFullyDisplayed
+                || CurrentState == DetailedTipAppearing || CurrentState == DetailedTipFullyDisplayed)
+            {
+                Debug.Log("ShiftingToolTip: " + data);
+                foreach (KeyValuePair<ToolTipElementID, string> entry in data.toolTipElementsDict)
+                {
+                    Debug.Log("data.Key: "+ entry.Key);
+                    //toolTipElementsDict.Add(entry.Key, entry.Value);
+                }
+                dataToUseForShift = data;
+                UpdateState(ShiftToolTip);
+
+            }
+            else if (CurrentState == WaitingToBeHidden || CurrentState == TipDisappearing) 
 			{
 				// This happens when the user quickly shifts from one UI element to another (or the same)
 				// and the disappearing duration is long 
-				Debug.Log ("<color=orange>ToolTipController::Trying to show a tool tip while it was disappearing</color>");
-			} 
+				Debug.Log ("<color=blue>ToolTipController::Trying to show a tool tip while it was disappearing: "+CurrentState.Name+"</color>");
+                animationHelper.StopAnimation(disappearAnimID);
+                //if (!toolTipObj.SetupToolTip(data, preferredToolTipPlacement))
+                //{
+                //    Debug.LogError("ToolTipContorller::Invalid Tool Tip Data!");
+                //    return;
+                //}
+
+
+                // We need to change the state so that it does not interfere with another call
+                //UpdateState(SmallTipFullyDisplayed);
+                dataToUseForShift = data;
+                UpdateState(ShiftToolTip);
+            } 
 			else 
 			{
 				// Something unexpected happened. This should not be the case
@@ -539,9 +688,24 @@ public class ToolTipController : StateImplementor
 
 	public void RemoveToolTip()
 	{
-		UpdateState (TipDisappearing);
+		UpdateState (WaitingToBeHidden);
 	}
 
-	#endregion
+    public void AppearAnimationComplete()
+    {
+        //Debug.Log("ToolTipController::AppearAnimationComplete");
+        UpdateState(SmallTipFullyDisplayed);
+        //DebugStates();
+    }
+
+    public void DisappearAnimationComplete()
+    {
+        //Debug.Log("ToolTipController::DisappearAnimationComplete");
+        toolTipObj.ResetToolTip();
+        UpdateState (WaitingToBeCalled);
+        //DebugStates();
+    }
+
+    #endregion
 
 }

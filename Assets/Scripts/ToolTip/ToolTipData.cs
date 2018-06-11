@@ -32,6 +32,14 @@ public class ToolTipData
 		toolTipElementsDict = new Dictionary<ToolTipElementID, string>();
 	}
 
+    public ToolTipData(ToolTipData other)
+    {
+        foreach(KeyValuePair<ToolTipElementID, string> entry in other.toolTipElementsDict)
+        {
+            toolTipElementsDict.Add(entry.Key, entry.Value);
+        }   
+    }
+
 	//Simple constructor to add just a basic small tool tip text
 	public ToolTipData(string _smallToolTipText)
 	{

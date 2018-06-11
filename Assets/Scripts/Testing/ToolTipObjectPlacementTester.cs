@@ -5,7 +5,7 @@ using UnityEngine;
 public class ToolTipObjectPlacementTester : MonoBehaviour
 {
 
-    public ToolTipObjTest toolTipTestObject;
+    public ToolTipObj toolTipObject;
     public RectTransform UIElement1;
 
     //Different Types of data that the tool tip can handle
@@ -24,8 +24,13 @@ public class ToolTipObjectPlacementTester : MonoBehaviour
     // Use this for initialization
     void Start ()
     {
+        if(toolTipObject != null )
+        {
+            toolTipObject.Initialize();
+        }
         InitializeToolTipData();
         InitializeToolTipPlacements();
+        toolTipObject.GetRectTransform().localScale = new Vector3(1, 1, 1);
 
     }
 
@@ -35,59 +40,59 @@ public class ToolTipObjectPlacementTester : MonoBehaviour
         if (Input.GetKeyUp(KeyCode.S))
         {
             //Populate the Tool Tip Obj
-            toolTipTestObject.SetupToolTip(smallTextData);
+            toolTipObject.SetupToolTip(smallTextData, TLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.D))
         {
             //Populate the Tool Tip Obj
-            toolTipTestObject.SetupToolTip(smallTextWithImageData);
+            toolTipObject.SetupToolTip(smallTextWithImageData, TLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.F))
         {
             //Populate the Tool Tip Obj
-            toolTipTestObject.SetupToolTip(detailedTextData);
+            toolTipObject.SetupToolTip(detailedTextData, TLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.G))
         {
-            toolTipTestObject.SetupToolTip(smallImageData);
+            toolTipObject.SetupToolTip(smallImageData, TLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.R))
         {
-            toolTipTestObject.ResetToolTip();
+            toolTipObject.ResetToolTip();
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha1))
         {
-            toolTipTestObject.UpdateToolTipAnchor(TLTR);
+            toolTipObject.UpdateToolTipPlacement(TLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha2))
         {
-            toolTipTestObject.UpdateToolTipAnchor(TRTR);
+            toolTipObject.UpdateToolTipPlacement(TRTR);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha3))
         {
-            toolTipTestObject.UpdateToolTipAnchor(TRTL);
+            toolTipObject.UpdateToolTipPlacement(TRTL);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha4))
         {
-            toolTipTestObject.UpdateToolTipAnchor(BLTR);
+            toolTipObject.UpdateToolTipPlacement(BLTR);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha5))
         {
-            toolTipTestObject.UpdateToolTipAnchor(BRTR);
+            toolTipObject.UpdateToolTipPlacement(BRTR);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha6))
         {
-            toolTipTestObject.UpdateToolTipAnchor(BRTL);
+            toolTipObject.UpdateToolTipPlacement(BRTL);
         }
 
         if (Input.GetKeyUp(KeyCode.Alpha7))
@@ -107,9 +112,9 @@ public class ToolTipObjectPlacementTester : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.P))
         {
-            if (toolTipTestObject.GetRectTransform() != null && UIElement1 != null)
+            if (toolTipObject.GetRectTransform() != null && UIElement1 != null)
             {
-                toolTipTestObject.GetRectTransform().SetParent(UIElement1, false);
+                toolTipObject.GetRectTransform().SetParent(UIElement1, false);
             }
         }
 
@@ -152,10 +157,10 @@ public class ToolTipObjectPlacementTester : MonoBehaviour
 
     private void DebugUIInfo()
     {
-        Debug.Log("<color=magenta>***************************</color>", toolTipTestObject.gameObject);
-        Debug.Log("UI Element Name: " + toolTipTestObject.gameObject.name);
-        Debug.Log("Go Position: " + toolTipTestObject.gameObject.transform.position);
-        RectTransform myRect = toolTipTestObject.gameObject.GetComponent<RectTransform>();
+        Debug.Log("<color=magenta>***************************</color>", toolTipObject.gameObject);
+        Debug.Log("UI Element Name: " + toolTipObject.gameObject.name);
+        Debug.Log("Go Position: " + toolTipObject.gameObject.transform.position);
+        RectTransform myRect = toolTipObject.gameObject.GetComponent<RectTransform>();
         Debug.Log("Rect is Available: " + myRect);
         if (myRect != null)
         {

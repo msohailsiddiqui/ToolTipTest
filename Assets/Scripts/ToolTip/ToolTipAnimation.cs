@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ToolTipAnimations : MonoBehaviour 
+public class ToolTipAnimation : MonoBehaviour 
 {
 	//************************************************************************************
 	// This class will serve as the base class that provides functions for animating tool tips

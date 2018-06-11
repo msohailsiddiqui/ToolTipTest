@@ -3,24 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum ToolTipAnchor
-{
-	TopLeft = 0,
-	TopCenter,
-	TopRight,
-	BottomLeft,
-	BottomCenter,
-	BottomRight
-}
-
 //************************************************************************************
 // This class will serve as the base class that provides function to actually show the tool tip
 // This should be attached to a game object that has the needed elements to display the tool tip
 //************************************************************************************
 
-public class ToolTipObj : MonoBehaviour 
+
+public class ToolTipObj : MonoBehaviour
 {
-	public Image bgImage;
+    #region Member Variables
+    public Image bgImage;
 	public Text smallText;
 	public Text detailedText;
 	public Text linkText;
@@ -58,20 +50,10 @@ public class ToolTipObj : MonoBehaviour
 			currentToolTipPlacement = value;
 		}
 	}
+    #endregion
 
-
-	// The position of the object on which this tip will be displayed
-	// This will be populated by the object that is requesting the tool tip
-	private Vector2 objPos;
-
-	// We get the preferred anchor of the tool tip, from a setting of the tool tip controller
-	// but depending on the scenario it might be changed, if there isn't enough space to display it on this anchor
-	// For Example, if the preferred anchor is set to bottom right and the button trying to display the tool tip
-	// is located at the bottom right of the screen it will reposition it 
-	// This variable will contain the final anchor on which the tool tip can be displayed
-	//private ToolTipAnchor selectedAnchor;
-
-	public RectTransform GetRectTransform()
+   
+    public RectTransform GetRectTransform()
 	{
 		return toolTipRectTransform;
 	}
@@ -139,7 +121,9 @@ public class ToolTipObj : MonoBehaviour
 
     }
 
-	public bool SetupToolTip (Vector2 posToBeUsed, ToolTipData data, ToolTipAnchor anchorToBeUsed)
+    // Primarily this function recieves the data from the controller and performs basic validation
+    // If we have some valid data then we setup the tool tip object and copy the data 
+	public bool SetupToolTip (ToolTipData data, ToolTipPlacementData placementToBeUsed)
 	{
 		//Check if the data object is valid
 		if (data == null) 
@@ -147,37 +131,30 @@ public class ToolTipObj : MonoBehaviour
 			Debug.LogError ("SimpleToolTipObj::Tool Tip Data Validation failed, data was NULL, This should never be null ");
 			return false;
 		}
-		if (!UIHelper.IsPointOnScreen (posToBeUsed)) 
-		{
-			Debug.LogError ("ToolTipObj::Obj that wants to show tool tip is not on Screen, object pos: "+ posToBeUsed );
-			return false;
-		}
+        
+        ////Check if the bare minimum data is present (small tool tip text)
+        //if (data.HasElement (ToolTipElementID.SmallToolTipText)) 
+        //{
+        //	// if we have the right data copy it to our variables
+        //	smallText.text = data.GetElement(ToolTipElementID.SmallToolTipText);
+        //	//selectedAnchor = SelectAnchor (anchorToBeUsed, data);
+        //	gameObject.transform.position = new Vector3 (posToBeUsed.x, posToBeUsed.y, 0);
+        //	//CalculatePosition (posToBeUsed, selectedAnchor);
+        //	//CalculateSize ();
+        //	return true;
+        //} 
+        //else 
+        //{
+        //	return false;
+        //}
 
-		////Check if the bare minimum data is present (small tool tip text)
-		//if (data.HasElement (ToolTipElementID.SmallToolTipText)) 
-		//{
-		//	// if we have the right data copy it to our variables
-		//	smallText.text = data.GetElement(ToolTipElementID.SmallToolTipText);
-		//	//selectedAnchor = SelectAnchor (anchorToBeUsed, data);
-		//	gameObject.transform.position = new Vector3 (posToBeUsed.x, posToBeUsed.y, 0);
-		//	//CalculatePosition (posToBeUsed, selectedAnchor);
-		//	//CalculateSize ();
-		//	return true;
-		//} 
-		//else 
-		//{
-		//	return false;
-		//}
-
-		//*************************************************************************
-		// From ObjTest
-		//*************************************************************************
-		ResetToolTip ();
-        Debug.Log("Position on which tool tip will be placed: " + posToBeUsed+ ", Screen width: "+Screen.width+ ", Screen height: "+Screen.height);
-        toolTipRectTransform.anchoredPosition = new Vector2(posToBeUsed.x, posToBeUsed.y);
-        //gameObject.transform.position = new Vector3(posToBeUsed.x, posToBeUsed.y, 0);
+        // We dont position the tool tip yet since it will be positioned when it start appearing (after the tipAppearingDelay) 
+        ResetToolTip();
+        
+        // Check if the bare minimum data is present (small tool tip text)
         if (!data.HasElement (ToolTipElementID.SmallToolTipText)) 
 		{
+            // cannot setup the tool tip return false
 			return false;	
 
 		}
@@ -189,10 +166,17 @@ public class ToolTipObj : MonoBehaviour
 			//Debug.Log ("ToolTipObjTest::SetupToolTip:Data has small image: "+data.GetElement (ToolTipElementID.SmallDescriptionImage));
 
 			Sprite tempSprite = Resources.Load (data.GetElement (ToolTipElementID.SmallDescriptionImage), typeof(Sprite)) as Sprite;
-			//Debug.Log ("ToolTipObjTest::SetupToolTip:small image: "+tempSprite);
-			//Debug.Log ("ToolTipObjTest::SetupToolTip:small image size: "+tempSprite.rect.size );
-			uiElementsDict [ToolTipElementID.SmallDescriptionImage].imageElement.sprite = tempSprite;
-			uiElementsDict [ToolTipElementID.SmallDescriptionImage].UpdateElement ();
+            if (tempSprite != null)
+            {
+                //Debug.Log ("ToolTipObjTest::SetupToolTip:small image: "+tempSprite);
+                //Debug.Log ("ToolTipObjTest::SetupToolTip:small image size: "+tempSprite.rect.size );
+                uiElementsDict[ToolTipElementID.SmallDescriptionImage].imageElement.sprite = tempSprite;
+                uiElementsDict[ToolTipElementID.SmallDescriptionImage].UpdateElement();
+            }
+            else
+            {
+                Debug.Log("<color=orange>ToolTipObjTest::SetupToolTip:Could not load image with name: " + data.GetElement(ToolTipElementID.SmallDescriptionImage)+ "</color>");
+            }
 		}
 		if (data.HasElement (ToolTipElementID.DetailedToolTipText)) 
 		{
@@ -314,8 +298,8 @@ public class ToolTipObj : MonoBehaviour
 		totalContentWidth += borderX;
 		totalContentHeight += borderY;
 
-        Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentHeight: " + totalContentHeight + "</color>");
-        Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentWidth: " + totalContentWidth + "</color>");
+        //Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentHeight: " + totalContentHeight + "</color>");
+        //Debug.Log("<color=yellow>CalculateToolTipElementSizes: Final totalContentWidth: " + totalContentWidth + "</color>");
         //Debug.Log ("<color=orange>smallTextYOffset: "+smallTextYOffset+ "</color>");
         //Debug.Log ("<color=orange>smallTextYOffset: "+smallImageXOffset+ "</color>");
     }
@@ -385,7 +369,7 @@ public class ToolTipObj : MonoBehaviour
 		PositionToolTipElements ();
 	}
 
-	public void UpdateToolTipAnchor(ToolTipPlacementData requiredPlacement)
+	public void UpdateToolTipPlacement(ToolTipPlacementData requiredPlacement)
 	{
 		CurrentToolTipPlacement.VerticalPlacement = requiredPlacement.VerticalPlacement;
 		CurrentToolTipPlacement.HorizontalPlacement = requiredPlacement.HorizontalPlacement;
@@ -408,7 +392,7 @@ public class ToolTipObj : MonoBehaviour
 
 	private bool CheckIfWithinBounds(int _allowedRecursionLevel)
 	{
-		Debug.Log("CheckIfWithinBounds::_allowedRecursionLevel: " + _allowedRecursionLevel);
+		//Debug.Log("CheckIfWithinBounds::_allowedRecursionLevel: " + _allowedRecursionLevel);
 		if (_allowedRecursionLevel > 0)
 		{
 			_allowedRecursionLevel--;
@@ -425,13 +409,13 @@ public class ToolTipObj : MonoBehaviour
 			if (minY < 0 || maxY > Screen.height || minX < 0 || maxX > Screen.width)
 			{
 				// Tooltip is outside of the screen
-				Debug.Log("<color=red>Tooltip is outside of the screen:maxY: " + maxY + ", minY: " + minY + ", ReFtting </color>");
+				//Debug.Log("<color=red>Tooltip is outside of the screen:maxY: " + maxY + ", minY: " + minY + ", ReFtting </color>");
 				FitWithinScreenBounds(minX, maxX, minY, maxY);
 				return CheckIfWithinBounds(_allowedRecursionLevel);
 			}
 			else
 			{
-				Debug.Log("<color=green>Tooltip is inside of the screen:maxY: " + maxY + ", minY: " + minY + " </color>");
+				//Debug.Log("<color=green>Tooltip is inside of the screen:maxY: " + maxY + ", minY: " + minY + " </color>");
 				return true;
 			}
 		}
@@ -441,8 +425,8 @@ public class ToolTipObj : MonoBehaviour
 
 	private void FitWithinScreenBounds(float _minX, float _maxX, float _minY, float _maxY)
 	{
-		Debug.Log("<color=orange>Tooltip specified placement is: "
-			+CurrentToolTipPlacement.VerticalPlacement+CurrentToolTipPlacement.HorizontalPlacement+CurrentToolTipPlacement.HorizontalDirection+" </color>");
+		//Debug.Log("<color=orange>Tooltip specified placement is: "
+		//	+CurrentToolTipPlacement.VerticalPlacement+CurrentToolTipPlacement.HorizontalPlacement+CurrentToolTipPlacement.HorizontalDirection+" </color>");
 		// In most cases these two scenarios will be mutually exclusive unless the tool tip content is larger than the screen width
 		// not sure what we can do in this scenario.
 		if (_minX < 0 && _maxX > Screen.width)
@@ -457,7 +441,7 @@ public class ToolTipObj : MonoBehaviour
 		// In this case we can just switch the direction to LeftToRight
 		else if (_minX < 0)
 		{
-			Debug.Log("<color=yellow>minX<0</color>");
+			//Debug.Log("<color=yellow>minX<0</color>");
 			CurrentToolTipPlacement.UpdateToolTipHorizontalDirection(UIElementHorizontalDirection.LeftToRight);
 		}
 		// means that the tool tip is going out of screen from the right
@@ -465,7 +449,7 @@ public class ToolTipObj : MonoBehaviour
 		// In this case we can just switch the direction to RightToLeft
 		else if (_maxX > Screen.width)
 		{
-			Debug.Log("<color=yellow>maxX<Screen.Width</color>");
+			//Debug.Log("<color=yellow>maxX>Screen.Width</color>");
 			CurrentToolTipPlacement.UpdateToolTipHorizontalDirection(UIElementHorizontalDirection.RightToLeft);
 		}
 
@@ -480,7 +464,7 @@ public class ToolTipObj : MonoBehaviour
 		// In this case we have to put the tool tip at the top
 		else if (_minY < 0)
 		{
-			Debug.Log("<color=yellow>minY<0</color>");
+			//Debug.Log("<color=yellow>minY<0</color>");
 			CurrentToolTipPlacement.UpdateToolTipVerticalPlacement(UIElementVerticalPlacement.Top);
 		}
 		// means that the tool tip is going out of screen from the top
@@ -488,12 +472,12 @@ public class ToolTipObj : MonoBehaviour
 		// In this case we have to put the tool tip at the bottom
 		else if (_maxY > Screen.height)
 		{
-			Debug.Log("<color=yellow>maxY>Screen.Height</color>");
+			//Debug.Log("<color=yellow>maxY>Screen.Height</color>");
 			CurrentToolTipPlacement.UpdateToolTipVerticalPlacement(UIElementVerticalPlacement.Bottom);
 		}
 
-		Debug.Log("<color=yellow>Tooltip refitted placement is: "
-			+ CurrentToolTipPlacement.VerticalPlacement + CurrentToolTipPlacement.HorizontalPlacement + CurrentToolTipPlacement.HorizontalDirection + " </color>");
+		//Debug.Log("<color=yellow>Tooltip refitted placement is: "
+		//	+ CurrentToolTipPlacement.VerticalPlacement + CurrentToolTipPlacement.HorizontalPlacement + CurrentToolTipPlacement.HorizontalDirection + " </color>");
 
 		toolTipRectTransform.pivot = CurrentToolTipPlacement.RequiredPivot;
 		toolTipRectTransform.anchorMax = CurrentToolTipPlacement.RequiredAnchorMax;
@@ -506,6 +490,26 @@ public class ToolTipObj : MonoBehaviour
         toolTipRectTransform.pivot = CurrentToolTipPlacement.RequiredPivot;
         toolTipRectTransform.anchorMax = CurrentToolTipPlacement.RequiredAnchorMax;
         toolTipRectTransform.anchorMin = CurrentToolTipPlacement.RequiredAnchorMin;
+    }
+
+    public bool ShowToolTip(Vector2 toolTipPosition)
+    {
+        // Basic sanity check, passed position should always be on the screen
+        if (!UIHelper.IsPointOnScreen(toolTipPosition))
+        {
+            Debug.LogError("ToolTipObj::trying to show a tool tip off screen: " + toolTipPosition);
+            return false;
+        }
+
+        //Debug.Log("Position on which tool tip will be placed: " + toolTipPosition + ", Screen width: "+Screen.width+ ", Screen height: "+Screen.height);
+        toolTipRectTransform.anchoredPosition = new Vector2(toolTipPosition.x, toolTipPosition.y);
+        toolTipRectTransform.localScale = Vector3.one;
+        // Whenever we try to show a tool tip first we try to show it at the preferred placement
+        // For that we need to update the current placement
+        CurrentToolTipPlacement.ResetToolTipPlacementAndDirection(UIElementHorizontalPlacement.Left, UIElementVerticalPlacement.Bottom, UIElementHorizontalDirection.LeftToRight);
+        UpdateRectTransform();
+        CheckAndFitWithinScreenBounds();
+        return true;
     }
 
 }

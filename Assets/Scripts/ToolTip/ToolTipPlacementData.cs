@@ -22,6 +22,12 @@ using UnityEngine;
 
 public class ToolTipPlacementData : UIElementPlacementData
 {
+    // a tool tip can be placed relative to the screen or relative to a UI Obj
+    // By Default the tool tip is parented to the main canvas
+    // if we want to place it relative to an object, we need to parent it to the obj
+    // This parenting is currently done by the Tool Tip Controller
+    // If we are placing raltive to the screen/main canvas we will not update the anchors
+    private bool relativeToScreen = true;
     public ToolTipPlacementData()
     {
         // by default we want the tool tip to be anchored at the bottom left (0,0)
@@ -31,6 +37,19 @@ public class ToolTipPlacementData : UIElementPlacementData
         HorizontalPlacement = UIElementHorizontalPlacement.Left;
         VerticalPlacement = UIElementVerticalPlacement.Bottom;
         HorizontalDirection = UIElementHorizontalDirection.LeftToRight;
+
+        UpdatePivotAndAnchors();
+    }
+
+    public ToolTipPlacementData(ToolTipPlacementData other)
+    {
+        // by default we want the tool tip to be anchored at the bottom left (0,0)
+        // and pivoted at the top left (0,1), this means that horizontal placement will be Left, 
+        // Vertical Placement to be bottom and direction to be Left To Right
+
+        HorizontalPlacement = other.HorizontalPlacement;
+        VerticalPlacement = other.VerticalPlacement;
+        HorizontalDirection = other.HorizontalDirection;
 
         UpdatePivotAndAnchors();
     }
@@ -54,11 +73,13 @@ public class ToolTipPlacementData : UIElementPlacementData
         switch (HorizontalPlacement)
         {
             case UIElementHorizontalPlacement.Left:
-                anchorHorizontal = 0;
+                if(!relativeToScreen)
+                    anchorHorizontal = 0;
                 pivotHorizontal = 0;
                 break;
             case UIElementHorizontalPlacement.Right:
-                anchorHorizontal = 1;
+                if (!relativeToScreen)
+                    anchorHorizontal = 1;
                 pivotHorizontal = 0;
                 break;
             default:
@@ -69,11 +90,13 @@ public class ToolTipPlacementData : UIElementPlacementData
         switch (VerticalPlacement)
         {
             case UIElementVerticalPlacement.Top:
-                anchorVertical = 1;
+                if (!relativeToScreen)
+                    anchorVertical = 1;
                 pivotVertical = 0;
                 break;
             case UIElementVerticalPlacement.Bottom:
-                anchorVertical = 0;
+                if (!relativeToScreen)
+                    anchorVertical = 0;
                 pivotVertical = 1;
                 break;
             default:
@@ -96,6 +119,8 @@ public class ToolTipPlacementData : UIElementPlacementData
 
         RequiredAnchorMin = new Vector2(anchorHorizontal, anchorVertical);
         RequiredAnchorMax = new Vector2(anchorHorizontal, anchorVertical);
+        // Debug.Log("ToolTipPlacementData::UpdatePivotAndAnchors: HorizontalPlacement: " + HorizontalPlacement + ", pivotHorizontal: " + pivotHorizontal +
+        //    ", VerticalPlacement: " + VerticalPlacement + ", pivotVertical: " + pivotVertical);
         RequiredPivot = new Vector2(pivotHorizontal, pivotVertical);
     }
 
@@ -109,5 +134,19 @@ public class ToolTipPlacementData : UIElementPlacementData
     {
         VerticalPlacement = _updatedVerticalPlacement;
         UpdatePivotAndAnchors();
+    }
+
+    public void ResetToolTipPlacementAndDirection(UIElementHorizontalPlacement _horizontalPlacement, UIElementVerticalPlacement _verticalPlacement, 
+        UIElementHorizontalDirection _horizontalDirection)
+    {
+        HorizontalPlacement = _horizontalPlacement;
+        VerticalPlacement = _verticalPlacement;
+        HorizontalDirection = _horizontalDirection;
+        UpdatePivotAndAnchors();
+    }
+
+    public void SetRelativeToScreen(bool _relativeToScreen)
+    {
+        relativeToScreen = _relativeToScreen;
     }
 }
