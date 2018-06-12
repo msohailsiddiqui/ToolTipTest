@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!-- New XML document created with EditiX XML Editor (http://www.editix.com) at Thu May 01 12:23:46 GMT+05:30 2014 -->
+<ToolTipsData>
+  <ToolTipData ToolTipID="ToolTipID1">
+    <SmallToolTipText>SmallToolTipText ToolTipID1</SmallToolTipText>
+    <DetailedToolTipText>DetailedToolTipText ToolTipID1
+With some long descriptive text like
+The Quick brown fox jump over the lazy dog
+    </DetailedToolTipText>
+    <SmallDescriptionImage>SmallDescriptionImage ToolTipID1</SmallDescriptionImage>
+    <LargeDescriptionImage>LargeDescriptionImage ToolTipID1</LargeDescriptionImage>
+    <HelpLinkURL>HelpLinkURL ToolTipID1</HelpLinkURL>
+  </ToolTipData>
+  <ToolTipData ToolTipID="ToolTipID2">
+    <SmallToolTipText>SmallToolTipText ToolTipID2</SmallToolTipText>
+    <DetailedToolTipText>DetailedToolTipText ToolTipID2</DetailedToolTipText>
+    <SmallDescriptionImage>SmallDescriptionImage ToolTipID2</SmallDescriptionImage>
+    <LargeDescriptionImage>LargeDescriptionImage ToolTipID2</LargeDescriptionImage>
+    <HelpLinkURL>HelpLinkURL ToolTipID2</HelpLinkURL>
+  </ToolTipData>
+</ToolTipsData>

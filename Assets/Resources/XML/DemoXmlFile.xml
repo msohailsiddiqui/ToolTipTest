@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!-- New XML document created with EditiX XML Editor (http://www.editix.com) at Thu May 01 12:23:46 GMT+05:30 2014 -->
+<Players>
+  <Player id="1">
+    <name>Player1</name>
+    <score>276447232</score>
+  </Player>
+  <Player id="2">
+    <name>Player2</name>
+    <score>552894464</score>
+  </Player>
+  <Player id="3">
+    <name>Player3</name>
+    <score>829341696</score>
+  </Player>
+  <Player id="4">
+    <name>Player4</name>
+    <score>1105788928</score>
+  </Player>
+  <Player id="5">
+    <name>Player5</name>
+    <score>1382236160</score>
+  </Player>
+  <Player id="6">
+    <name>Player6</name>
+    <score>1658683392</score>
+  </Player>
+  <Player id="7">
+    <name>Player7</name>
+    <score>70000000</score>
+  </Player>
+  <Player id="8">
+    <name>Player8</name>
+    <score>80000000</score>
+  </Player>
+  <Player id="9">
+    <name>Player9</name>
+    <score>90000000</score>
+  </Player>
+  <Player id="10">
+    <name>Player10</name>
+    <score>100000000</score>
+  </Player>
+</Players>

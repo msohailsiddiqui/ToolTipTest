@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!-- New XML document created with EditiX XML Editor (http://www.editix.com) at Thu May 01 12:23:46 GMT+05:30 2014 -->
+<UIElementsData>
+  <UIElementData UIElementID="Slider1">
+    <ToolTipID>ToolTipID1</ToolTipID>
+  </UIElementData>
+  <UIElementData UIElementID="Slider2">
+    <ToolTipID>ToolTipID2</ToolTipID>
+  </UIElementData>
+  <UIElementData UIElementID="Slider3">
+    <ToolTipID>ToolTipID1</ToolTipID>
+  </UIElementData>
+</UIElementsData>

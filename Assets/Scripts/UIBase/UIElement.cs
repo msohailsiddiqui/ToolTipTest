@@ -110,4 +110,8 @@ public class UIElementPlacementData
     }
 }
 
+public class UIElement : MonoBehaviour
+{
+    public string elementID;
+}
 

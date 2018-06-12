@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BaseDataManager : MonoBehaviour 
+public class DataManager : MonoBehaviour 
 {
 
 	//************************************************************************************

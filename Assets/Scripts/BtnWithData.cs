@@ -70,7 +70,7 @@ public class BtnWithData : MonoBehaviour
 		if (toolTipController != null && toolTipData.HasElement(ToolTipElementID.SmallToolTipText)) 
 		{
 			//toolTipController.ToolTipNeedsToBeShown (gameObject.transform.position, toolTipData);
-			toolTipController.ToolTipNeedsToBeShown (Input.mousePosition, toolTipData);
+			toolTipController.ToolTipNeedsToBeShown ( toolTipData);
 		}
 	}
 

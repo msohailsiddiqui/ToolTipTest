@@ -211,8 +211,7 @@ public class ToolTipController : StateImplementor
 
     protected override void Start () 
 	{
-		base.Start();
-		InitializeStates();
+		
 	}
 
 	#endregion
@@ -601,7 +600,16 @@ public class ToolTipController : StateImplementor
     #region FunctionsThatOtherModulesWillCall
 
     //Other modules/elements that can display a tool tip will call this 
-    public void ToolTipNeedsToBeShown(Vector2 positionOnScreen, ToolTipData data)
+    public void ToolTipNeedsToBeShown(string uiElementID)
+    {
+        ToolTipData dataForUIElement;
+        dataForUIElement = ReferenceManager.Instance.uiElementsDataManagerRef.GetToolTipForUIElement(uiElementID);
+        if(dataForUIElement != null && dataForUIElement.HasElement(ToolTipElementID.SmallToolTipText))
+        {
+            ToolTipNeedsToBeShown(dataForUIElement);
+        }
+    }
+    public void ToolTipNeedsToBeShown(ToolTipData data)
 	{
 		// TODO: Add a return Status
 		// This might return a status based on validation of the data
@@ -704,6 +712,12 @@ public class ToolTipController : StateImplementor
         toolTipObj.ResetToolTip();
         UpdateState (WaitingToBeCalled);
         //DebugStates();
+    }
+
+    public void Initialize()
+    {
+        base.Start();
+        InitializeStates();
     }
 
     #endregion
