@@ -516,7 +516,7 @@ public class ToolTipController : StateImplementor
     void TipDisappearing_Begin()
 	{
         tipDisappearStartTime = Time.time;
-		Debug.Log ("<color=brown>ToolTipController::Tip is Disappearing: CurrentScale is: " + toolTipObj.transform.localScale.x+"</color>");
+		//Debug.Log ("<color=brown>ToolTipController::Tip is Disappearing: CurrentScale is: " + toolTipObj.transform.localScale.x+"</color>");
         float startingScale = toolTipObj.transform.localScale.x;
         if (animationHelper != null)
             disappearAnimID = animationHelper.AnimateScale(toolTipObj.transform, startingScale, 0, startingScale * tipDisappearDuration, EasingType.SmootherLerp, DisappearAnimationComplete);
